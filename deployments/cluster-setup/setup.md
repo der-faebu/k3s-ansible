@@ -150,8 +150,15 @@ Install traefik via helm
 helm install traefik traefik/traefik --namespace=traefik --values=deployments/cluster-setup/traefik/02-traefik-helm-values.yaml
 ```
 
-## Cloudflared
-
+### Rancher ingress
+To test the newly deployed traefik reverse proxy, we can now deploy an ingress for Ranger
 ```
+kubectl apply -f deployments/clusters-setup/rancher/ingress-rancher.yaml
+```
+
+## Cloudflared
+To take the most out of our setup we now deploy cloudflared. This allows us to use cloudflare tunnel.
+```
+kubectl apply -f deployments/cluster-setup/cloudflared/cloudflared-deployment.yaml
 ```
 11. Deploy applications
