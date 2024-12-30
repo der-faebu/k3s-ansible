@@ -158,6 +158,16 @@ kubectl apply -f deployments/clusters-setup/rancher/ingress-rancher.yaml
 
 ## Cloudflared
 To take the most out of our setup we now deploy cloudflared. This allows us to use cloudflare tunnel.
+
+### Tunnel token as secret
+Create a new namespace called 'cloudlflared' and create a secret containing the tunnel token.
+
+```
+kubectl create namespace cloudflared
+kubectl create secret generic cloudflare-tunnel-token --from-literal=token='<token>' --namespace cloudflare
+```
+
+Deploy the cloudflare pods.
 ```
 kubectl apply -f deployments/cluster-setup/cloudflared/cloudflared-deployment.yaml
 ```
