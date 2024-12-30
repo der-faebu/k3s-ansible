@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nginx-pvc-ns
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nginx-pvc-storage
+  namespace: nginx-pvc-ns
+spec:
+  storageClassName: nfs-client
+  accessModes: [ReadWriteOnce]
+  resources: { requests: { storage: 5Gi } }
+---
+apiVersion: v1
+kind: Service
+metadata: 
+  name: nginx-pvc-lb
+  namespace: nginx-pvc-ns
+  annotations:
+    metallb.universe.tf/loadBalancerIPs: 172.16.101.101
+spec:
+  selector:
+    app: nginx-pvc-app
+  ports:
+  - port: 80
+    targetPort: 80
+  type: LoadBalancer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-pvc-app
+  namespace: nginx-pvc-ns
+spec:
+  selector:
+    matchLabels:
+      app: nginx-pvc-app
+  replicas: 2
+  template:
+    metadata:
+      namespace: nginx-pvc-ns-app
+      labels:
+        app: nginx-pvc-app
+    spec:
+      volumes:
+        - name: pvc
+          persistentVolumeClaim:
+            claimName: nginx-pvc-storage
+      containers:
+        - name: nginx-backend
+          image: nginx:latest
+          resources:
+            limits:
+              memory: 512M
+              cpu: 1
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: pvc
+              mountPath: /usr/share/nginx/html
