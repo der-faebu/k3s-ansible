@@ -9,7 +9,7 @@ After the deployment has run successfully, copy the kubeconfig from one of the m
 
 ## Set up rancher
 
-This guide follows the official rancher documentation. 
+This guide follows the official rancher documentation.
 https://ranchermanager.docs.rancher.com/getting-started/installation-and-upgrade/install-upgrade-on-a-kubernetes-cluster
 
 Add the rancher helm repo
@@ -33,11 +33,11 @@ helm install \
   --set crds.enabled=true
 ```
 
-Now we can install rancher 
+Now we can install rancher
 ```
 helm install rancher rancher-stable/rancher \
   --namespace cattle-system \
-  --set hostname=rancher.k3s-mini.gygax.cloud \
+  --set hostname=rancher.gygax.cloud \
   --set bootstrapPassword=admin
   ```
 
@@ -47,23 +47,23 @@ In order to access our rancher instance we now need to create a LoadBalancer obj
 Be sure to set the IP address rancher should be exposed at in the yml file. If not, MetalLB will assign one from its configured range. Once Cloudflared is deployed, only a ClusterIP will be needed as traffic will be routed through CloudFlare.
 
 ```
-kubectl apply -f deployments/cluster-setup/lb-service-rancher.yml
+kubectl apply -f deployments/cluster-setup/rancher/lb-service-rancher.yml
 ```
 The rancher GUI can now be accessed via https://rancher.k3s-mini.gygax.cloud (where the hostname must point to the configured LoadBalancer IP)
 
 ## Longhorn
-In order to take advantage of persistant storage, we install Longhorn. 
+In order to take advantage of persistant storage, we install Longhorn.
 
 This will be done following https://longhorn.io/docs/1.7.2/deploy/install/
 
 ### Requirements
-Install the longhorn CLI. 
+Install the longhorn CLI.
 ```
 curl -sSfL -o longhornctl https://github.com/longhorn/cli/releases/download/v1.7.2/longhornctl-linux-amd64
 chmod +x ./longhornctl
 ```
 
-As of v1.7.2 Longhorn provides an installer script for open-iscsi. 
+As of v1.7.2 Longhorn provides an installer script for open-iscsi.
 ```
 kubectl apply -f https://raw.githubusercontent.com/longhorn/longhorn/v1.7.2/deploy/prerequisite/longhorn-iscsi-installation.yaml
 ```
@@ -78,6 +78,7 @@ The following packages must be installed on all worker nodes:
 - blkid
 - lsblk
 - cryptsetup
+- nfs-common
 
 he packages `open-iscsi` must be installed on all agent nodes. Also, the `iscsid` deamon must be enabled and started.
 ```
@@ -86,7 +87,7 @@ sudo systemctl start iscsid && sudo systemctl start iscsid
 We can now check if all the requirements are fulfilled by using the longhorn CLI:
 
 ```
-./longhornctl check preflight
+./longhornctl check preflight --kube-config ~/.kube/config
 ```
 ### Install Longhorn
 
@@ -96,7 +97,7 @@ Install Longhort via the Rancher GUI
 In our cluster, we use Traefik as our load balanger / ingress controller.
 
 This is a fairly complex installation consisting of multiple elements.
-However, all the 
+However, all the
 
 ### Cluster issuer
 In order to be able to request Let's-Encrypt certificates via cert-manager, we need to setup a cluster issuer. This consists of mutliple parts:
@@ -109,8 +110,14 @@ In order to be able to request Let's-Encrypt certificates via cert-manager, we n
 
 #### Create the secret
 In order not to check in any sensitive data the secret containing the Cloudflare API key can be created on the fly with the following command. Alternatively, the corresponding section can be uncommented in the traefik deployment file.
+
+Create the namespace
 ```
-kubectl create cloudflare-api-credentials generic cloudflare-api-credentials \
+kubectl create namespace traefik
+```
+
+```
+kubectl create secret generic cloudflare-api-credentials \
     --from-literal=email='<email>' \
     --from-literal=api-token='<api-key>' \
     --namespace traefik \
@@ -138,7 +145,7 @@ helm repo update
 ```
 Update the values in deployments\cluster-setup\traefik\02-traefik-helm-values.yaml
 
-Install traefik via helm 
+Install traefik via helm
 ```
 helm install traefik traefik/traefik --namespace=traefik --values=deployments/cluster-setup/traefik/02-traefik-helm-values.yaml
 ```
