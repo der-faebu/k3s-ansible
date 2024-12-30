@@ -16,7 +16,7 @@ ports:
       default: true
     exposedPort: 80
     protocol: TCP
-    redirectTo: 
+    redirectTo:
       port: websecure
 
   websecure:
@@ -29,7 +29,7 @@ ports:
     tls:
       enabled: true
 
-tlsStore: 
+tlsStore:
   default:
     defaultCertificate:
       secretName: gygax-cloud-wildcard-cert-data
@@ -38,9 +38,8 @@ service:
   enabled: true
   single: true
   type: LoadBalancer
-  annotations: 
-    metallb.universe.tf/loadBalancerIPs: 172.16.101.121
-
+  annotations:
+    metallb.universe.tf/loadBalancerIPs: 172.18.1.51
 env:
   - name: CF_API_EMAIL
     valueFrom:

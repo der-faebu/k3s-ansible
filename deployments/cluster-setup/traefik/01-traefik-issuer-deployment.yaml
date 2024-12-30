@@ -12,16 +12,16 @@ metadata:
   namespace: traefik
 spec:
   storageClassName: longhorn
-  accessModes: 
+  accessModes:
     - ReadWriteOnce
-  resources: 
-    requests: 
+  resources:
+    requests:
       storage: 128Mi
 # ---
 # apiVersion: v1
 # kind: Secret
 # metadata:
-#   name: cloudflare-api-credentials 
+#   name: cloudflare-api-credentials
 #   namespace: traefik
 # type: Opaque
 # stringData:
@@ -35,15 +35,15 @@ metadata:
   namespace: traefik
 spec:
   acme:
-    server: https://acme-staging-v02.api.letsencrypt.org/directory
-    # server: https://acme-v02.api.letsencrypt.org/directory
-    email: k3s-mini@gygax.rocks
+    # server: https://acme-staging-v02.api.letsencrypt.org/directory
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: fabian@gygax.tech
     privateKeySecretRef:
       name: gygax-cloud-wildcard-pk
     solvers:
       - dns01:
           cloudflare:
-            email: k3s-lab@gygax.rocks
+            email: fabian@gygax.tech
             apiTokenSecretRef:
               name: cloudflare-api-credentials
               key: api-token
@@ -56,7 +56,6 @@ metadata:
 spec:
   secretName: gygax-cloud-wildcard-cert-data
   dnsNames:
-    - "gygax.cloud"
     - "*.gygax.cloud"
   issuerRef:
     name: cloudflare
