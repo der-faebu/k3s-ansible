@@ -1,0 +1,109 @@
+
+#
+# IMPORTANT NOTE
+#
+# This chart inherits from our common library chart. You can check the default values/options here:
+# https://github.com/k8s-at-home/library-charts/tree/main/charts/stable/common/values.yaml
+#
+
+image:
+  repository: ghcr.io/hotio/whisparr
+  tag: latest
+  pullPolicy: IfNotPresent
+
+env:
+  TZ: Europe/Zurich
+  PUID: 1030
+  PGID: 100
+
+service:
+  main:
+    enabled: true
+    type: ClusterIP
+    ports:
+      http:
+        port: 6969
+        enabled: true
+        targetPort: 6969
+        protocol: HTTP
+
+ingress:
+  main:
+    enabled: true
+    primary: true
+    nameOverride:
+    annotations:
+      traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    labels: {}
+    ingressClassName:  traefik # "nginx"
+    hosts:
+    - host: whisparr.gygax.cloud
+      paths:
+      - path: /
+        pathType: Prefix
+        service:
+          name: whisparr
+          port: 6969
+probes:
+  liveness:
+    enabled: true
+    custom: true
+    spec:
+      exec:
+        command:
+        - /usr/bin/env
+        - bash
+        - -c
+        - curl --fail localhost:6969/api/v3/system/status?apiKey=`IFS=\> && while
+          read -d \< E C; do if [[ $E = "ApiKey" ]]; then echo $C; fi; done < /config/config.xml`
+      failureThreshold: 5
+      initialDelaySeconds: 60
+      periodSeconds: 10
+      successThreshold: 1
+      timeoutSeconds: 10
+persistence:
+  data:
+    enabled: true
+    type: pvc
+    mountPath:  /data # /config
+    readOnly: false
+    nameOverride: data
+    storageClass: # "-"
+    existingClaim: nsfw-pvc # your-claim
+    subPath: # some-subpath
+    accessMode: ReadWriteMany
+    size: 5Ti
+    retain: true
+
+  config:
+    enabled: true
+    type: pvc
+    mountPath:  /config # /config
+    readOnly: false
+    nameOverride: config
+    storageClass:  longhorn # "-"
+    existingClaim: # your-claim
+    subPath: # some-subpath
+    accessMode: ReadWriteOnce
+    size: 1Gi
+    retain: false
+
+metrics:
+  enabled: false
+  serviceMonitor:
+    interval: 3m
+    scrapeTimeout: 1m
+    labels: {}
+  prometheusRule:
+    enabled: false
+    labels: {}
+    rules: []
+  exporter:
+    image:
+      repository: ghcr.io/onedr0p/exportarr
+      tag: v1.3.1
+      pullPolicy: IfNotPresent
+    env:
+      port: 9793
+      additionalMetrics: false
+      unknownQueueItems: false

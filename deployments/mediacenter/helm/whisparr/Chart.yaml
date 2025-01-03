@@ -1,0 +1,20 @@
+apiVersion: v2
+appVersion: 1.0.0
+description: whisparr helm package
+name: whisparr
+version: 1.1.0
+kubeVersion: ">=1.16.0-0"
+keywords:
+  - whisparr
+home: https://github.com/k8s-home-lab/helm-charts/tree/master/charts/stable/whisparr
+icon: https://whisparr.org/icon
+sources:
+  - https://github.com/whisparr/${CHARTNAME}-docker
+dependencies:
+  - name: common
+    repository: https://library-charts.k8s-at-home.com
+    version: 4.5.2
+annotations:
+  artifacthub.io/changes: |
+    - kind: added
+      description: Initial version
