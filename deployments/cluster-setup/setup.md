@@ -171,4 +171,28 @@ Deploy the cloudflare pods.
 ```
 kubectl apply -f deployments/cluster-setup/cloudflared/cloudflared-deployment.yaml
 ```
-11. Deploy applications
+## . Deploy applications
+The following repos are in use (not counting infrastrucutre charts installed above like traefik):
+  k8s-home-lab            https://k8s-home-lab.github.io/helm-charts/
+  bjw-s                   https://bjw-s.github.io/helm-charts
+  k8s-at-home             https://k8s-at-home.com/charts/
+  jellyfin                https://jellyfin.github.io/jellyfin-helm
+  k8s-at-home-charts      https://library-charts.k8s-at-home.com
+
+All applications shloud be setup in a similar and consistant way. Whenever possible a maintained chart vom k8s-home-lab should be used and preferred. It is however possible to use the app template provided by https://bjw-ss.github.io 
+
+### Gluetun
+In order to setup gluetun a nordvpn private key must be extracted. In order to achieve this, the following prerequisites must be fulfilled:
+- install nordvpn on a linux machine (WSL should work)
+- authenticate with nordvpn
+- set the vpn protocol to 'nordlynx'
+- retrieve the pk using this command:
+  `sudo wg show nordlynx private-key`
+
+Create a kubernetes secret containing the private key:
+```
+kubectl create secret generic wg-private-key \
+     --from-literal=wg-private-key='<api-token>' \
+     --namespace <namespace> \
+     --type opaque
+```

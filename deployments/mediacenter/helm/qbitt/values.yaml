@@ -5,6 +5,13 @@
 # a secret containing the WG_PRIVATE_KEY must be
 # created before installing this chart
 
+# kubectl create secret generic wg-private-key \
+#     --from-literal=wg-private-key='<api-token>' \
+#     --namespace mediacenter \
+#     --type opaque
+
+
+
 # Configure options applied to all pods
 defaultPodOptions:
   automountServiceAccountToken: false
