@@ -1,4 +1,5 @@
 
+
 #
 # IMPORTANT NOTE
 #
@@ -7,7 +8,7 @@
 #
 
 image:
-  repository: linuxserver/lidarr
+  repository: organizr/organizr
   tag: latest
   pullPolicy: IfNotPresent
 
@@ -24,8 +25,8 @@ service:
   ports:
     http:
       enabled: true
-      port: 8686
-      targetPort: 8686
+      port: 80
+      targetPort: 80
       protocol: HTTP
 
 ingress:
@@ -34,51 +35,19 @@ ingress:
     primary: true
     nameOverride:
     annotations:
-      traefik.ingress.kubernetes.io/router.entrypoints: websecure
-      
+        traefik.ingress.kubernetes.io/router.entrypoints: websecure
     labels: {}
-    
     ingressClassName:  traefik # "nginx"
     hosts:
-      
-    - host: lidarr.gygax.cloud
-      paths:
-      - path: /
-        pathType: Prefix
-        service:
-          name: lidarr
-          port: 8686
-probes:
-  liveness:
-    enabled: true
-    custom: true
-    spec:
-      exec:
-        command:
-        - /usr/bin/env
-        - bash
-        - -c
-        - curl --fail localhost:8686/api/v1/system/status?apiKey=`IFS=\> && while
-          read -d \< E C; do if [[ $E = "ApiKey" ]]; then echo $C; fi; done < /config/config.xml`
-      failureThreshold: 5
-      initialDelaySeconds: 60
-      periodSeconds: 10
-      successThreshold: 1
-      timeoutSeconds: 10
-persistence:
-  data:
-    enabled: true
-    type: pvc
-    mountPath:  /data # /config
-    readOnly: false
-    nameOverride: data
-    storageClass: # "-"
-    existingClaim: media-pvc # your-claim
-    subPath: # some-subpath
-    accessMode: ReadWriteMany
-    size: 5Ti
-    retain: true
+      - host: organizr.gygax.cloud
+        paths:
+          - path: /
+            pathType: Prefix
+            service:
+              name: organizr
+              port: 80
 
+persistence:
   config:
     enabled: true
     type: pvc
@@ -90,7 +59,8 @@ persistence:
     subPath: # some-subpath
     accessMode: ReadWriteOnce
     size: 1Gi
-    retain: false
+    retain: true
+
 
 metrics:
   enabled: false
@@ -98,6 +68,7 @@ metrics:
     interval: 3m
     scrapeTimeout: 1m
     labels: {}
+  
   prometheusRule:
     enabled: false
     labels: {}

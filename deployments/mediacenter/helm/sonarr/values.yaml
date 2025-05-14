@@ -4,6 +4,7 @@
 # This chart inherits from our common library chart. You can check the default values/options here:
 # https://github.com/k8s-at-home/library-charts/tree/main/charts/stable/common/values.yaml
 #
+# helm install sonarr k8s-at-home/sonarr -f sonarr/values.yml
 
 image:
   repository: linuxserver/sonarr
@@ -14,6 +15,7 @@ env:
   TZ: Europe/Zurich
   PUID: 1030
   PGID: 100
+
 service:
   main:
     enabled: true
@@ -36,9 +38,9 @@ ingress:
     labels: {}
     ingressClassName:  traefik # "nginx"
     hosts:
-        host: sonarr.gygax.cloud
+      - host: sonarr.gygax.cloud
         paths:
-            path: /
+          - path: /
             pathType: Prefix
             service:
               name: sonarr

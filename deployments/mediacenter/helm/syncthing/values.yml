@@ -4,12 +4,14 @@
 # This chart inherits from our common library chart. You can check the default values/options here:
 # https://github.com/k8s-at-home/library-charts/tree/main/charts/stable/common/values.yaml
 #
-# helm install radarr k8s-home-lab/radarr
-
+# helm install syncthing k8s-home-lab/syncthing -f /mediacenter/helm/syncthing/values.yml
 
 image:
-  repository: linuxserver/radarr
-  tag: latest
+  # -- image repository
+  repository: syncthing/syncthing
+  # -- image tag
+  tag:
+  # -- image pull policy
   pullPolicy: IfNotPresent
 
 env:
@@ -17,17 +19,39 @@ env:
   PUID: 1030
   PGID: 100
 
+# -- Configures service settings for the chart.
+# @default -- See values.yaml
 service:
   main:
     enabled: true
-    type: ClusterIP
-    
-  ports:
-    http:
-      enabled: true
-      port: 7878
-      targetPort: 7878
-      protocol: HTTP
+    type: LoadBalancer
+
+    ports:
+      http:
+        port: 8384
+        enabled: true
+
+  listen:
+    enabled: true
+    type: NodePort
+    externalTrafficPolicy: Local
+    ports:
+      listen:
+        enabled: true
+        port: 22000
+        protocol: TCP
+        targetPort: 22000
+
+  discovery:
+    enabled: true
+    type: NodePort
+    externalTrafficPolicy: Local
+    ports:
+      discovery:
+        enabled: true
+        port: 21027
+        protocol: UDP
+        targetPort: 21027
 
 ingress:
   main:
@@ -39,14 +63,16 @@ ingress:
     labels: {}
     ingressClassName:  traefik # "nginx"
     hosts:
-      - host: radarr.gygax.cloud
+      - host: syncthing.gygax.cloud
         paths:
           - path: /
             pathType: Prefix
             service:
-              name: radarr
-              port: 7878
+              name: syncthing
+              port: 8384
 
+# -- Configure persistence settings for the chart under this key.
+# @default -- See values.yaml
 persistence:
   data:
     enabled: true
@@ -54,22 +80,22 @@ persistence:
     mountPath:  /data # /config
     readOnly: false
     nameOverride: data
-    storageClass: # "-"
+    storageClass:  # "-"
     existingClaim: media-pvc # your-claim
     subPath: # some-subpath
     accessMode: ReadWriteMany
     size: 5Ti
     retain: true
-
   config:
+
     enabled: true
     type: pvc
-    mountPath:  /config # /config
+    mountPath: /var/syncthing/config
     readOnly: false
     nameOverride: config
     storageClass:  longhorn # "-"
     existingClaim: # your-claim
     subPath: # some-subpath
     accessMode: ReadWriteOnce
-    size: 1Gi
-    retain: false
+    size: 3Gi
+    retain: true

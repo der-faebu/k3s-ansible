@@ -1,14 +1,15 @@
-
 #
 # IMPORTANT NOTE
 #
 # This chart inherits from our common library chart. You can check the default values/options here:
 # https://github.com/k8s-at-home/library-charts/tree/main/charts/stable/common/values.yaml
 #
+# helm install readarr k8s-home-lab/readarr
+
 
 image:
-  repository: linuxserver/lidarr
-  tag: latest
+  repository: linuxserver/readarr
+  tag: develop
   pullPolicy: IfNotPresent
 
 env:
@@ -24,8 +25,8 @@ service:
   ports:
     http:
       enabled: true
-      port: 8686
-      targetPort: 8686
+      port: 8787
+      targetPort: 8787
       protocol: HTTP
 
 ingress:
@@ -35,36 +36,18 @@ ingress:
     nameOverride:
     annotations:
       traefik.ingress.kubernetes.io/router.entrypoints: websecure
-      
     labels: {}
-    
     ingressClassName:  traefik # "nginx"
     hosts:
-      
-    - host: lidarr.gygax.cloud
-      paths:
-      - path: /
-        pathType: Prefix
-        service:
-          name: lidarr
-          port: 8686
+      - host: readarr.gygax.cloud
+        paths:
+          - path: /
+            pathType: Prefix
+            service:
+              name: readarr
+              port: 8787
 probes:
   liveness:
-    enabled: true
-    custom: true
-    spec:
-      exec:
-        command:
-        - /usr/bin/env
-        - bash
-        - -c
-        - curl --fail localhost:8686/api/v1/system/status?apiKey=`IFS=\> && while
-          read -d \< E C; do if [[ $E = "ApiKey" ]]; then echo $C; fi; done < /config/config.xml`
-      failureThreshold: 5
-      initialDelaySeconds: 60
-      periodSeconds: 10
-      successThreshold: 1
-      timeoutSeconds: 10
 persistence:
   data:
     enabled: true
@@ -91,23 +74,3 @@ persistence:
     accessMode: ReadWriteOnce
     size: 1Gi
     retain: false
-
-metrics:
-  enabled: false
-  serviceMonitor:
-    interval: 3m
-    scrapeTimeout: 1m
-    labels: {}
-  prometheusRule:
-    enabled: false
-    labels: {}
-    rules: []
-  exporter:
-    image:
-      repository: ghcr.io/onedr0p/exportarr
-      tag: v1.3.1
-      pullPolicy: IfNotPresent
-    env:
-      port: 9793
-      additionalMetrics: false
-      unknownQueueItems: false

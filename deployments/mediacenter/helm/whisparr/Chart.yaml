@@ -8,8 +8,7 @@ keywords:
   - whisparr
 home: https://github.com/k8s-home-lab/helm-charts/tree/master/charts/stable/whisparr
 icon: https://whisparr.org/icon
-sources:
-  - https://github.com/whisparr/${CHARTNAME}-docker
+
 dependencies:
   - name: common
     repository: https://library-charts.k8s-at-home.com
