@@ -46,6 +46,12 @@ This should leave us with a functioning instance of rancher in our k3s cluster.
 In order to access our rancher instance we now need to create a LoadBalancer object for it.
 Be sure to set the IP address rancher should be exposed at in the yml file. If not, MetalLB will assign one from its configured range. Once Cloudflared is deployed, only a ClusterIP will be needed as traffic will be routed through CloudFlare.
 
+MetalLB reserved IPs:
+- 172.18.1.51 --> Traefik
+- 172.18.1.52 --> Audiobookshelf
+- 172.18.1.53 --> Syncthing
+- 172.18.1.56 --> Rancher
+
 ```
 kubectl apply -f deployments/cluster-setup/rancher/lb-service-rancher.yml
 ```
@@ -180,6 +186,8 @@ The following repos are in use (not counting infrastrucutre charts installed abo
   k8s-at-home-charts      https://library-charts.k8s-at-home.com
 
 All applications shloud be setup in a similar and consistant way. Whenever possible a maintained chart vom k8s-home-lab should be used and preferred. It is however possible to use the app template provided by https://bjw-ss.github.io 
+
+tl;dr `helm install <release-name> bjw-s/app-template -f values.yaml`
 
 ### Gluetun
 In order to setup gluetun a nordvpn private key must be extracted. In order to achieve this, the following prerequisites must be fulfilled:
