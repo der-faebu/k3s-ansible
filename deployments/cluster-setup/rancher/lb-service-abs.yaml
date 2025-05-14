@@ -5,7 +5,7 @@ metadata:
   labels:
     app: audiobookshelf
   annotations:
-    metallb.universe.tf/loadBalancerIPs: 172.18.1.56
+    metallb.universe.tf/loadBalancerIPs: 172.18.1.52
     app: audiobookshelf
   namespace: mediacenter
 spec:

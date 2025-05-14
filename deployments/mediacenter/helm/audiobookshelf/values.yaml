@@ -5,6 +5,7 @@
 # This chart inherits from our common library chart. You can check the default values/options here:
 # https://github.com/k8s-at-home/library-charts/tree/main/charts/stable/common/values.yaml
 #
+# helm install audiobookshelf k8s-home-lab/audiobookshelf -f audiobookshelf/values.yaml
 
 image:
   repository: ghcr.io/advplyr/audiobookshelf
@@ -19,7 +20,7 @@ env:
 service:
   main:
     enabled: true
-    type: ClusterIP
+    type: LoadBalancer
     
   ports:
     http:
@@ -35,38 +36,24 @@ ingress:
     nameOverride:
     annotations:
         traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    
     customRequestHeaders:
       Connection: keep-alive, Upgrade
       Upgrade: WebSocket
+    transport:
+      respondingTimeouts:
+        readTimeout: 300s
+        writeTimeout: 300s
+        idleTimeout: 300s
     labels: {}
     ingressClassName:  traefik # "nginx"
     hosts:
-        host: audiobookshelf.gygax.cloud
+      - host: audiobookshelf.gygax.cloud
         paths:
-            path: /
+          - path: /
             pathType: Prefix
             service:
               name: audiobookshelf
               port: 80
-
-probes:
-  liveness:
-    enabled: true
-    custom: true
-    spec:
-      exec:
-        command:
-        - /usr/bin/env
-        - bash
-        - -c
-        - curl --fail localhost:80/api/v3/system/status?apiKey=`IFS=\> && while
-          read -d \< E C; do if [[ $E = "ApiKey" ]]; then echo $C; fi; done < /config/config.xml`
-      failureThreshold: 5
-      initialDelaySeconds: 60
-      periodSeconds: 10
-      successThreshold: 1
-      timeoutSeconds: 10
 
 persistence:
   metadata:
@@ -79,7 +66,7 @@ persistence:
     existingClaim: # your-claim
     subPath: # some-subpath
     accessMode: ReadWriteMany
-    size: 1Gi
+    size: 5Gi
     retain: true
  
   data:
@@ -105,7 +92,7 @@ persistence:
     existingClaim: # your-claim
     subPath: # some-subpath
     accessMode: ReadWriteOnce
-    size: 1Gi
+    size: 5Gi
     retain: true
 
 metrics:
