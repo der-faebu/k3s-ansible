@@ -20,38 +20,41 @@ service:
   main:
     enabled: true
     type: ClusterIP
-    
-  ports:
-    http:
-      enabled: true
-      port: 8096
-      targetPort: 8096
-      protocol: HTTP
+    ports:
+      http:
+        port: 8096
+        enabled: true
+        targetPort: 8096
+        protocol: HTTP
 
 ingress:
-  enabled: true
-  primary: true
-  nameOverride:
-  annotations:
+  main:
+    enabled: true
+    primary: true
+    nameOverride:
+    annotations:
       traefik.ingress.kubernetes.io/router.entrypoints: websecure
-  customRequestHeaders:
-    X-Robots-Tag: noindex, nofollow, nosnippet, noarchive, notranslate, noimageindex
-    STSSeconds: 315360000
-    STSIncludeSubdomains: true
-    STSPreload: true
-    forceSTSHeader: true
-    frameDeny: true
-    contentTypeNosniff: true
-    customFrameOptionsValue: allow-from https://jellyfin.gygax.cloud
-  customresponseheaders:
-    X-XSS-PROTECTION: 1
+    labels: {}
+    ingressClassName:  traefik # "nginx"
 
+    headers: 
+      customRequestHeaders:
+        Connection: keep-alive, Upgrade
+        Upgrade: WebSocket
+        X-Robots-Tag: noindex, nofollow, nosnippet, noarchive, notranslate, noimageindex
+        STSSeconds: 315360000
+        STSIncludeSubdomains: true
+        STSPreload: true
+        forceSTSHeader: true
+        frameDeny: true
+        contentTypeNosniff: true
+        customFrameOptionsValue: allow-from https://jellyfin.gygax.cloud
+      customresponseheaders:
+        X-XSS-PROTECTION: 1
 
-  labels: {}
-  ingressClassName:  traefik # "nginx"
-  hosts:
-  - host: jellyfin.gygax.cloud
-    paths:
+    hosts:
+    - host: jellyfin.gygax.cloud
+      paths:
       - path: /
         pathType: Prefix
         service:
@@ -59,25 +62,15 @@ ingress:
           port: 8096
 
 persistence:
-  config:
-    enabled: true
-    type: pvc
-    mountPath:  /config # /config
-    readOnly: false
-    nameOverride: config
-    storageClass:  longhorn # "-"
-    existingClaim: # your-claim
-    subPath: # some-subpath
-    accessMode: ReadWriteOnce
-    size: 1Gi
-    retain: false
 
-  media:
+
+
+  data:
     enabled: true
     type: pvc
-    mountPath:  /media # /config
+    mountPath:  /data # /config
     readOnly: false
-    nameOverride: media
+    nameOverride: data
     storageClass: # "-"
     existingClaim: media-pvc # your-claim
     subPath: # some-subpath
@@ -85,22 +78,41 @@ persistence:
     size: 5Ti
     retain: true
 
-metrics:
-  enabled: false
-  serviceMonitor:
-    interval: 3m
-    scrapeTimeout: 1m
-    labels: {}
-  prometheusRule:
-    enabled: false
-    labels: {}
-    rules: []
-  exporter:
-    image:
-      repository: ghcr.io/onedr0p/exportarr
-      tag: v1.3.1
-      pullPolicy: IfNotPresent
-    env:
-      port: 9793
-      additionalMetrics: false
-      unknownQueueItems: false
+  cache:
+    enabled: true
+    type: pvc
+    mountPath:  /cache # /config
+    readOnly: false
+    nameOverride: cache
+    storageClass:  longhorn # "-"
+    existingClaim: # your-claim
+    subPath: # some-subpath
+    accessMode: ReadWriteOnce
+    size: 1Gi
+    retain: false
+
+  metadata:
+    enabled: true
+    type: pvc
+    mountPath:  /metadata # /config
+    readOnly: false
+    nameOverride: metadata
+    storageClass:  longhorn # "-"
+    existingClaim: # your-claim
+    subPath: # some-subpath
+    accessMode: ReadWriteOnce
+    size: 5Gi
+    retain: false
+
+  config:
+    enabled: true
+    type: pvc
+    mountPath:  /config # /config
+    readOnly: false
+    nameOverride: config
+    storageClass:  longhorn # "-"
+    existingClaim:  # your-claim
+    subPath: # some-subpath
+    accessMode: ReadWriteOnce
+    size: 1Gi
+    retain: true
