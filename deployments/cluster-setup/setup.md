@@ -114,7 +114,69 @@ In order to be able to request Let's-Encrypt certificates via cert-manager, we n
     - This cert can be referenced in further deployments
     - I deem a wildcard cert sufficient in this case as traefik will not face the internet.
 
+### Create Azure Service principal
+
+Ensure azure cli and jq are insatlled
+
+```bash
+# Choose a name for the service principal that contacts azure DNS to present
+# the challenge.
+AZURE_CERT_MANAGER_NEW_SP_NAME=sp-k3s-certmanager
+# This is the name of the resource group that you have your dns zone in.
+AZURE_DNS_ZONE_RESOURCE_GROUP=gygax-tech-dns
+# The DNS zone name. It should be something like domain.com or sub.domain.com.
+AZURE_DNS_ZONE=gygax.cloud
+
+DNS_SP=$(az ad sp create-for-rbac --name $AZURE_CERT_MANAGER_NEW_SP_NAME --output json)
+AZURE_CERT_MANAGER_SP_APP_ID=$(echo $DNS_SP | jq -r '.appId')
+AZURE_CERT_MANAGER_SP_PASSWORD=$(echo $DNS_SP | jq -r '.password')
+AZURE_TENANT_ID=$(echo $DNS_SP | jq -r '.tenant')
+AZURE_SUBSCRIPTION_ID=$(az account show --output json | jq -r '.id')
+
+az role assignment delete --assignee $AZURE_CERT_MANAGER_SP_APP_ID --role Contributor
+
+DNS_ID=$(az network dns zone show --name $AZURE_DNS_ZONE --resource-group $AZURE_DNS_ZONE_RESOURCE_GROUP --query "id" --output tsv)
+
+az role assignment create --assignee $AZURE_CERT_MANAGER_SP_APP_ID --role "DNS Zone Contributor" --scope $DNS_ID
+
+az role assignment list --all --assignee $AZURE_CERT_MANAGER_SP_APP_ID
+
+
+echo "AZURE_CERT_MANAGER_SP_APP_ID: $AZURE_CERT_MANAGER_SP_APP_ID"
+echo "AZURE_CERT_MANAGER_SP_PASSWORD: $AZURE_CERT_MANAGER_SP_PASSWORD"
+echo "AZURE_SUBSCRIPTION_ID: $AZURE_SUBSCRIPTION_ID"
+echo "AZURE_TENANT_ID: $AZURE_TENANT_ID"
+echo "AZURE_DNS_ZONE: $AZURE_DNS_ZONE"
+echo "AZURE_DNS_ZONE_RESOURCE_GROUP: $AZURE_DNS_ZONE_RESOURCE_GROUP"
+
+```
+These values can then be inserted into the issuer deployment:
+
+```yml
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: example-issuer
+spec:
+  acme:
+    ...
+    solvers:
+    - dns01:
+        azureDNS:
+          clientID: AZURE_CERT_MANAGER_SP_APP_ID
+          clientSecretSecretRef:
+            name: azuredns-config
+            key: client-secret
+          subscriptionID: AZURE_SUBSCRIPTION_ID
+          tenantID: AZURE_TENANT_ID
+          resourceGroupName: AZURE_DNS_ZONE_RESOURCE_GROUP
+          hostedZoneName: AZURE_DNS_ZONE
+          # Azure Cloud Environment, default to AzurePublicCloud
+          environment: AzurePublicCloud
+```
+
 #### Create the secret
+This step assumes the session of the previuos step still exists as variables need to be solvable
 In order not to check in any sensitive data the secret containing the Cloudflare API key can be created on the fly with the following command. Alternatively, the corresponding section can be uncommented in the traefik deployment file.
 
 Create the namespace
@@ -123,21 +185,9 @@ kubectl create namespace traefik
 ```
 
 ```
-kubectl create secret generic cloudflare-api-credentials \
-    --from-literal=email='<email>' \
-    --from-literal=api-token='<api-key>' \
-    --namespace traefik \
-    --type opaque
+kubectl create secret generic azuredns-config --from-literal=client-secret=$AZURE_CERT_MANAGER_SP_PASSWORD
 ```
-Another way would be to store the values in files (.values directories will not be checked in)
-The files must only contain the plain values. No trailing new line.
-```
-kubectl create cloudflare-api-credentials generic cloudflare-api-credentials \
-    --from-file=email='deployments/cluster-setup/traefik/.values/cloudflare-email.yaml' \
-    --from-file=api-token='.values/cloudflare-api-token.yaml' \
-    --namespace traefik \
-    --type opaque
-```
+
 Once this is done we can deploy the cluster issuer
 ```
 kubectl apply -f deployments/cluster-setup/traefik/01-traefik-issuer-deployment.yaml
@@ -153,7 +203,7 @@ Update the values in deployments\cluster-setup\traefik\02-traefik-helm-values.ya
 
 Install traefik via helm
 ```
-helm install traefik traefik/traefik --namespace=traefik --values=deployments/cluster-setup/traefik/02-traefik-helm-values.yaml
+helm install traefik traefik/traefik --namespace=traefik --values=deployments/cluster-setup/traefik/traefik-helm-values.yaml
 ```
 
 ### Rancher ingress
@@ -162,21 +212,6 @@ To test the newly deployed traefik reverse proxy, we can now deploy an ingress f
 kubectl apply -f deployments/clusters-setup/rancher/ingress-rancher.yaml
 ```
 
-## Cloudflared
-To take the most out of our setup we now deploy cloudflared. This allows us to use cloudflare tunnel.
-
-### Tunnel token as secret
-Create a new namespace called 'cloudlflared' and create a secret containing the tunnel token.
-
-```
-kubectl create namespace cloudflared
-kubectl create secret generic cloudflare-tunnel-token --from-literal=token='<token>' --namespace cloudflare
-```
-
-Deploy the cloudflare pods.
-```
-kubectl apply -f deployments/cluster-setup/cloudflared/cloudflared-deployment.yaml
-```
 ## . Deploy applications
 The following repos are in use (not counting infrastrucutre charts installed above like traefik):
   k8s-home-lab            https://k8s-home-lab.github.io/helm-charts/
