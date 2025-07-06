@@ -1,0 +1,12 @@
+---
+# Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mediacenter
+---
+# Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mediacenter-nsfw

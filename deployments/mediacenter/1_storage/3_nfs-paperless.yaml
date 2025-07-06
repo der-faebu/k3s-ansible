@@ -1,0 +1,66 @@
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: paperless-consume-pv
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteMany
+  nfs:
+    path: /volume1/Scans/paperless
+    server: 10.125.0.24
+  persistentVolumeReclaimPolicy: Retain
+  mountOptions:
+    - hard
+  storageClassName: ""
+# Persistent Volume spec including capacity, access modes, NFS path, and server details follow
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: paperless-consume-pvc
+  namespace: mediacenter
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 5Gi
+  volumeName: paperless-consume-pv
+  storageClassName: ""
+# Persistent Volume Claim spec including access modes, resources requests, and storage class name follow
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: paperless-data-pv
+spec:
+  capacity:
+    storage: 100Gi
+  accessModes:
+    - ReadWriteMany
+  nfs:
+    path: /volume1/k3s/paperless
+    server: 10.125.0.24
+  persistentVolumeReclaimPolicy: Retain
+  mountOptions:
+    - hard
+  storageClassName: ""
+# Persistent Volume spec including capacity, access modes, NFS path, and server details follow
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: paperless-data-pvc
+  namespace: mediacenter
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 100Gi
+  volumeName: paperless-data-pv
+  storageClassName: ""
+# Persistent Volume Claim spec including access modes, resources requests, and storage class name follow

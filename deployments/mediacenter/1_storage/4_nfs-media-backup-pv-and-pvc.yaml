@@ -2,14 +2,14 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: nsfw-pvc
+  name: media-backup-pv
 spec:
   capacity:
-    storage: 1Ti
+    storage: 5Gi
   accessModes:
     - ReadWriteMany
   nfs:
-    path: /volume1/k3s/nsfw
+    path: /volume1/k3s/mediacenter/backup
     server: 10.125.0.24
   persistentVolumeReclaimPolicy: Retain
   mountOptions:
@@ -20,14 +20,14 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: nsfw-pvc
-  namespace: mediacenter-nsfw
+  name: media-backup-pvc
+  namespace: mediacenter
 spec:
   accessModes:
     - ReadWriteMany
   resources:
     requests:
-      storage: 1Ti
-  volumeName: nsfw-pvc
+      storage: 5Gi
+  volumeName: media-backup-pvc
   storageClassName: ""
 # Persistent Volume Claim spec including access modes, resources requests, and storage class name follow
