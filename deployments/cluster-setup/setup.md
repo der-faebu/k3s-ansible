@@ -219,6 +219,7 @@ The following repos are in use (not counting infrastrucutre charts installed abo
   k8s-at-home             https://k8s-at-home.com/charts/
   jellyfin                https://jellyfin.github.io/jellyfin-helm
   k8s-at-home-charts      https://library-charts.k8s-at-home.com
+  gabe565                 https://charts.gabe565.com
 
 All applications shloud be setup in a similar and consistant way. Whenever possible a maintained chart vom k8s-home-lab should be used and preferred. It is however possible to use the app template provided by https://bjw-ss.github.io 
 
