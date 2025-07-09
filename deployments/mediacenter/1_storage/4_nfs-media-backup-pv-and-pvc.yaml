@@ -28,6 +28,6 @@ spec:
   resources:
     requests:
       storage: 5Gi
-  volumeName: media-backup-pvc
+  volumeName: media-backup-pv
   storageClassName: ""
 # Persistent Volume Claim spec including access modes, resources requests, and storage class name follow

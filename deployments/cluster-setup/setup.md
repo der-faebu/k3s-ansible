@@ -212,7 +212,7 @@ To test the newly deployed traefik reverse proxy, we can now deploy an ingress f
 kubectl apply -f deployments/clusters-setup/rancher/ingress-rancher.yaml
 ```
 
-## . Deploy applications
+## Deploy applications
 The following repos are in use (not counting infrastrucutre charts installed above like traefik):
   k8s-home-lab            https://k8s-home-lab.github.io/helm-charts/
   bjw-s                   https://bjw-s.github.io/helm-charts

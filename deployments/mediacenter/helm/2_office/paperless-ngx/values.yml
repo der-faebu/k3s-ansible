@@ -1,0 +1,144 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/app-template-3.2.0/charts/other/app-template/values.schema.json
+
+# IMPORTANT NOTE
+#
+# This chart inherits from our common library chart. You can check the default values/options here:
+# https://github.com/bjw-s/helm-charts/blob/a081de5/charts/library/common/values.yaml
+#
+# To use this chart, you need to create the following secrets in the `mediacenter` namespace:
+# kubectl create secret generic paperless-pg-pw \
+#     --from-literal=paperless-pg-pw='<PG user password>' \
+#     --namespace mediacenter \
+#     --type opaque
+# kubectl create secret generic paperless-ngx-redis --from-literal=redis-password='asdf' --namespace mediacenter --type opaque
+#
+# We also need to create the PersistentVolume and PersistentVolumeClaim for the consume and data stores.
+# kubectl apply -f deployments/mediacenter/1_storage/3_nfs-paperless.yaml
+# Finally, install the chart with:
+# helm install paperless-ngx bjw-s/app-template  -f ./deployments/mediacenter/helm/paperless-ngx/values-new.yml
+
+defaultPodOptions:
+  automountServiceAccountToken: true
+
+controllers:
+  main:
+    annotations:
+      reloader.stakater.com/auto: "true"
+    pod:
+      securityContext:
+        fsGroup: 568
+        fsGroupChangePolicy: "OnRootMismatch"
+    containers:
+      paperless:
+        image:
+          repository: ghcr.io/paperless-ngx/paperless-ngx
+          pullPolicy: IfNotPresent
+          tag: latest
+        securityContext:
+          runAsUser: 1033
+          runAsGroup: 100
+
+        env:
+          TZ: Europe/Zurich
+          PUID: 1033
+          PGID: 100
+          PAPERLESS_URL: https://paperless-ngx.gygax.cloud
+          # PAPERLESS_ALLOWED_HOSTS: https://paperless-ngx.gygax.cloud
+          # PAPERLESS_CORS_ALLOWED_HOSTS: https://paperless-ngx.gygax.cloud
+          # PAPERLESS_TRUSTED_PROXIES: 172.18.1.51
+          # PAPERLESSS_CSRF_TRUSTED_ORIGINS: https://paperless-ngx.gygax.cloud
+          PAPERLESS_MEDIA_ROOT: /usr/src/paperless/data
+          PAPERLESS_DBHOST: 172.18.1.20
+          PAPERLESS_DBUSER: paperless
+          PAPERLESS_OCR_LANGUAGE: deu
+          PAPERLESS_CONSUMER_POLLING: 10
+          DEBUG: true
+          PAPERLESS_DBPASS:
+            secretKeyRef:
+              name: paperless-pg-pw
+              key: paperless-pg-pw
+      redis:
+        image:
+          repository: redis
+          pullPolicy: IfNotPresent
+          tag: latest
+        # securityContext:
+        #   runAsUser: 1000
+        #   runAsGroup: 1000
+        env:
+          - name: REDIS_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: paperless-ngx-redis
+                key: redis-password
+service:
+  main:
+    controller: main
+    enabled: true
+    type: ClusterIP
+    ports:
+      http:
+        port: 8000
+
+  redis:
+    controller: main
+    enabled: true
+    type: ClusterIP
+    ports:
+      redis:
+        port: 6379
+
+ingress:
+  main:
+    enabled: true
+    annotations:
+      traefik.ingress.kubernetes.io/router.entrypoints: websecure
+      traefik.ingress.kubernetes.io/middlewares.limit.buffering.maxRequestBodyBytes: "64000000"
+    className: traefik # "nginx"
+    hosts:
+      - host: paperless-ngx.gygax.cloud
+        paths:
+          - path: /
+            pathType: Prefix
+            service:
+              identifier: main
+              port: 8000
+
+persistence:
+  # -- Configure data volume settings for the chart under this key.
+  # @default -- See [values.yaml](./values.yaml)
+  data:
+    type: persistentVolumeClaim
+    existingClaim: paperless-data-pvc
+    advancedMounts:
+      main:
+        paperless:
+          - path: /usr/src/paperless/data
+            subPath: data
+
+  # export:
+  #   type: persistentVolumeClaim
+  #   existingClaim: paperless-data-pvc
+  #   advancedMounts:
+  #     main:
+  #       paperless:
+  #         - path: /usr/src/paperless/export
+  #           subPath: export
+
+  # media:
+  #   type: persistentVolumeClaim
+  #   existingClaim: paperless-data-pvc
+  #   advancedMounts:
+  #     main:
+  #       paperless:
+  #         - path: /usr/src/paperless/media
+  #           subPath: media
+
+  consume:
+    type: persistentVolumeClaim
+    existingClaim: paperless-consume-pvc
+    advancedMounts:
+      main:
+        paperless:
+          - path: /usr/src/paperless/consume
+            subPath: consume

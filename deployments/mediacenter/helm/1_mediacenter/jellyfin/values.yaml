@@ -1,0 +1,97 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/app-template-3.2.0/charts/other/app-template/values.schema.json
+
+# IMPORTANT NOTE
+#
+# This chart inherits from our common library chart. You can check the default values/options here:
+# https://github.com/bjw-s/helm-charts/blob/a081de5/charts/library/common/values.yaml
+#
+defaultPodOptions:
+  automountServiceAccountToken: true
+
+controllers:
+  main:
+    annotations:
+      reloader.stakater.com/auto: "true"
+    pod:
+      securityContext:
+        fsGroup: 568
+        fsGroupChangePolicy: "OnRootMismatch"
+    containers:
+      jellyfin:
+        image:
+          repository: linuxserver/jellyfin
+          pullPolicy: IfNotPresent
+          tag: latest
+        # We don't set the uid and gid here.
+        # securityContext:
+        #   runAsUser: 1033
+        #   runAsGroup: 100
+
+        env:
+          TZ: Europe/Zurich
+          # PUID: 1033
+          # PGID: 100
+service:
+  main:
+    controller: main
+    enabled: true
+    type: ClusterIP
+    ports:
+      http:
+        port: 8096
+
+ingress:
+  main:
+    enabled: true
+    annotations:
+      traefik.ingress.kubernetes.io/router.entrypoints: websecure
+      traefik.ingress.kubernetes.io/custom-request-headers: Connection:keep-alive,Upgrade||Upgrade:WebSocket,X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex,STSSeconds:315360000,STSIncludeSubdomains:true,STSPreload:true,forceSTSHeader:true,frameDeny:true,contentTypeNosniff:true,customFrameOptionsValue:allow-from https://jellyfin.gygax.cloud
+      traefik.ingress.kubernetes.io/custom-restponse-headers: X-XSS-PROTECTION:1
+    className: traefik # "nginx"
+    hosts:
+      - host: jellyfin.gygax.cloud
+        paths:
+          - path: /
+            pathType: Prefix
+            service:
+              identifier: main
+              port: 8096
+
+persistence:
+  data:
+    type: persistentVolumeClaim
+    existingClaim: media-pvc
+    advancedMounts:
+      main:
+        jellyfin:
+          - path: /data # /config
+
+  metadata:
+    storageClass: longhorn
+    accessMode: ReadWriteOnce
+    size: 5Gi
+    retain: true
+    advancedMounts:
+      main:
+        jellyfin:
+          - path: /metadata
+
+  cache:
+    storageClass: longhorn
+    accessMode: ReadWriteOnce
+    size: 5Gi
+    retain: true
+    advancedMounts:
+      main:
+        jellyfin:
+          - path: /cache
+
+  config:
+    storageClass: longhorn
+    accessMode: ReadWriteOnce
+    size: 1Gi
+    retain: true
+    advancedMounts:
+      main:
+        jellyfin:
+          - path: /config

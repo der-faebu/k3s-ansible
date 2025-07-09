@@ -1,0 +1,80 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/app-template-3.2.0/charts/other/app-template/values.schema.json
+
+# IMPORTANT NOTE
+#
+# This chart inherits from our common library chart. You can check the default values/options here:
+# https://github.com/bjw-s/helm-charts/blob/a081de5/charts/library/common/values.yaml
+#
+# helm install sonarr bjw-s/app-template  -f ./deployments/mediacenter/helm/radarr/values.yml
+
+defaultPodOptions:
+  automountServiceAccountToken: true
+
+controllers:
+  main:
+    annotations:
+      reloader.stakater.com/auto: "true"
+    pod:
+      securityContext:
+        fsGroup: 568
+        fsGroupChangePolicy: "OnRootMismatch"
+    containers:
+      sonarr:
+        image:
+          repository: linuxserver/sonarr
+          pullPolicy: IfNotPresent
+          tag: latest
+        env:
+          TZ: Europe/Zurich
+          PUID: 1030
+          PGID: 100
+service:
+  main:
+    controller: main
+    enabled: true
+    type: ClusterIP
+    ports:
+      http:
+        port: 8989
+
+ingress:
+  main:
+    enabled: true
+    annotations:
+      traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    className: traefik # "nginx"
+    hosts:
+      - host: sonarr.gygax.cloud
+        paths:
+          - path: /
+            pathType: Prefix
+            service:
+              identifier: main
+              port: 8989
+
+persistence:
+  data:
+    type: persistentVolumeClaim
+    existingClaim: media-pvc
+    advancedMounts:
+      main:
+        sonarr:
+          - path: /data # /config
+
+  backup:
+    type: persistentVolumeClaim
+    existingClaim: media-backup-pvc
+    advancedMounts:
+      main:
+        sonarr:
+          - path: /config/Backup
+
+  config:
+    storageClass: longhorn
+    accessMode: ReadWriteOnce
+    size: 1Gi
+    retain: true
+    advancedMounts:
+      main:
+        sonarr:
+          - path: /config

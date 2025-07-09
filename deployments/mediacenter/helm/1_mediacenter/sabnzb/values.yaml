@@ -1,20 +1,6 @@
-
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/app-template-3.2.0/charts/other/app-template/values.schema.json
 
-# when used with gluetun, a secret containing the WG_PRIVATE_KEY must be
-# created before installing this chart
-
-# kubectl create secret generic wg-private-key \
-#     --from-literal=wg-private-key='<api-token>' \
-#     --namespace mediacenter \
-#     --type opaque
-
-# helm install sabnzb bjw-s/app-template -f /sabnzb-gluetun/values.yaml
-
-
-serviceAccount:
-  create: false
 # Configure options applied to all pods
 defaultPodOptions:
   automountServiceAccountToken: false
@@ -45,37 +31,6 @@ controllers:
           runAsUser: 1030
           runAsGroup: 100
 
-      # Configure the gluetun sidecar
-      # gluetun:
-      #   dependsOn: main
-      #   image:
-      #     # -- image repository
-      #     repository: qmcgaw/gluetun
-      #     # -- image tag
-      #     # this example is not automatically updated, so be sure to use the latest image
-      #     tag: latest
-      #   # -- environment variables.
-      #   # See [image docs](https://github.com/qdm12/gluetun-wiki) for more details on how to configure
-      #   # your VPN and how to set up port-forwarding.
-      #   env:
-      #     VPN_TYPE: wireguard
-      #     VPN_INTERFACE: wg0
-      #     VPN_SERVICE_PROVIDER: nordvpn
-      #     WIREGUARD_PRIVATE_KEY: 
-      #       valueFrom:
-      #         secretKeyRef:
-      #           name: wg-private-key
-      #           key: wg-private-key
-      #     WIREGUARD_ADDRESSES: 10.5.0.2/32
-      #     SERVER_COUNTRIES: Switzerland
-      #     FIREWALL_VPN_INPUT_PORTS: 563,53,853
-      #     DNS_PLAINTEXT_ADDRESS: 1.1.1.1
-      #   # Configure the container-specific securityContext
-      #   securityContext:
-      #     capabilities:
-      #       add:
-      #         - NET_ADMIN
-    
 service:
   # Configure a service for the main application
   main:
@@ -90,7 +45,7 @@ ingress:
   main:
     className: "traefik"
     annotations:
-        traefik.ingress.kubernetes.io/router.entrypoints: websecure
+      traefik.ingress.kubernetes.io/router.entrypoints: websecure
     hosts:
       - host: "sabnzb.gygax.cloud"
         paths:
@@ -102,7 +57,7 @@ ingress:
 
 persistence:
   # Configure the main configuration storage location
-  config2:
+  config:
     storageClass: longhorn
     accessMode: ReadWriteOnce
     size: 1Gi
@@ -112,9 +67,34 @@ persistence:
         main:
           - path: /config
 
-  config:
+  data:
     existingClaim: media-pvc
+
     advancedMounts:
       main:
         main:
           - path: /data
+
+  # backup:
+  #   existingClaim: media-pvc
+  #   advancedMounts:
+  #     main:
+  #       main:
+  #         - path: /backups
+  #           subPath: backup/sabnzb
+
+  # tv:
+  #   existingClaim: media-pvc
+  #   advancedMounts:
+  #     main:
+  #       main:
+  #         - path: /tv
+  #           subPath: media/tv
+
+  # movies:
+  #   existingClaim: media-pvc
+  #   advancedMounts:
+  #     main:
+  #       main:
+  #         - path: /movies
+  #           subPath: media/movies

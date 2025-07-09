@@ -1,0 +1,66 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/app-template-3.2.0/charts/other/app-template/values.schema.json
+
+# IMPORTANT NOTE
+#
+# This chart inherits from our common library chart. You can check the default values/options here:
+# https://github.com/bjw-s/helm-charts/blob/a081de5/charts/library/common/values.yaml
+#
+defaultPodOptions:
+  automountServiceAccountToken: true
+
+controllers:
+  main:
+    annotations:
+      reloader.stakater.com/auto: "true"
+    pod:
+      securityContext:
+        fsGroup: 568
+        fsGroupChangePolicy: "OnRootMismatch"
+    containers:
+      heimdall:
+        image:
+          repository: linuxserver/heimdall
+          pullPolicy: IfNotPresent
+          tag: latest
+        # securityContext:
+        #   runAsUser: 1033
+        #   runAsGroup: 100
+
+        env:
+          TZ: Europe/Zurich
+          # PUID: 1033
+          # PGID: 100
+service:
+  main:
+    controller: main
+    enabled: true
+    type: ClusterIP
+    ports:
+      http:
+        port: 80
+
+ingress:
+  main:
+    enabled: true
+    annotations:
+      traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    className: traefik # "nginx"
+    hosts:
+      - host: heimdall.gygax.cloud
+        paths:
+          - path: /
+            pathType: Prefix
+            service:
+              identifier: main
+              port: 80
+
+persistence:
+  config:
+    storageClass: longhorn
+    accessMode: ReadWriteOnce
+    size: 1Gi
+    retain: true
+    advancedMounts:
+      main:
+        heimdall:
+          - path: /config

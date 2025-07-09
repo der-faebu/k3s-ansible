@@ -6,7 +6,7 @@
 #
 
 image:
-  repository: linuxserver/bazarr
+  repository: ghcr.io/advplyr/audiobookshelf
   tag: latest
   pullPolicy: IfNotPresent
 
@@ -18,13 +18,13 @@ env:
 service:
   main:
     enabled: true
-    type: ClusterIP
-    
+    type: LoadBalancer
+
   ports:
     http:
       enabled: true
-      port: 6767
-      targetPort: 6767
+      port: 80
+      targetPort: 80
       protocol: HTTP
 
 ingress:
@@ -33,41 +33,44 @@ ingress:
     primary: true
     nameOverride:
     annotations:
-        traefik.ingress.kubernetes.io/router.entrypoints: websecure
+      traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    customRequestHeaders:
+      Connection: keep-alive, Upgrade
+      Upgrade: WebSocket
+    transport:
+      respondingTimeouts:
+        readTimeout: 300s
+        writeTimeout: 300s
+        idleTimeout: 300s
     labels: {}
-    ingressClassName:  traefik # "nginx"
+    ingressClassName: traefik # "nginx"
     hosts:
-      host: bazarr.gygax.cloud
-      paths:
-        path: /
-        pathType: Prefix
-        service:
-          name: bazarr
-          port: 6767
-
-probes:
-  liveness:
-    enabled: true
-    custom: true
-    spec:
-      exec:
-        command:
-        - /usr/bin/env
-        - bash
-        - -c
-        - curl --fail localhost:6767/api/v3/system/status?apiKey=`IFS=\> && while
-          read -d \< E C; do if [[ $E = "ApiKey" ]]; then echo $C; fi; done < /config/config.xml`
-      failureThreshold: 5
-      initialDelaySeconds: 60
-      periodSeconds: 10
-      successThreshold: 1
-      timeoutSeconds: 10
+      - host: audiobookshelf.gygax.cloud
+        paths:
+          - path: /
+            pathType: Prefix
+            service:
+              name: audiobookshelf
+              port: 80
 
 persistence:
+  metadata:
+    enabled: true
+    type: pvc
+    mountPath: /metadata # /config
+    readOnly: false
+    nameOverride: metadata
+    storageClass: longhorn # "-"
+    existingClaim: # your-claim
+    subPath: # some-subpath
+    accessMode: ReadWriteMany
+    size: 5Gi
+    retain: true
+
   data:
     enabled: true
     type: pvc
-    mountPath:  /data # /config
+    mountPath: /data # /config
     readOnly: false
     nameOverride: data
     storageClass: # "-"
@@ -76,19 +79,19 @@ persistence:
     accessMode: ReadWriteMany
     size: 5Ti
     retain: true
-  
+
   config:
     enabled: true
     type: pvc
-    mountPath:  /config # /config
+    mountPath: /config # /config
     readOnly: false
     nameOverride: config
-    storageClass:  longhorn # "-"
+    storageClass: longhorn # "-"
     existingClaim: # your-claim
     subPath: # some-subpath
     accessMode: ReadWriteOnce
-    size: 1Gi
-    retain: false
+    size: 5Gi
+    retain: true
 
 metrics:
   enabled: false
