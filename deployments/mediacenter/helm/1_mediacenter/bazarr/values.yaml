@@ -25,7 +25,8 @@ controllers:
 
         env:
           TZ: Europe/Zurich
-
+          PUID: 1030
+          PGID: 100
 service:
   main:
     controller: main

@@ -37,7 +37,7 @@ helm install radarr bjw-s/app-template  -f ./deployments/mediacenter/helm/radarr
 helm instaHll lidarr bjw-s/app-template  -f ./deployments/mediacenter/helm/lidarr/values.yml
 ````
 
-#### Radarr
+#### Badarr
 
 ```
 helm install bazarr bjw-s/app-template  -f ./deployments/mediacenter/helm/bazarr/values.yml
@@ -65,8 +65,8 @@ Deployment hasn't been migrated to new bjw-s charts
 #### sabnzb
 ````
 helm install sabnzb bjw-s/app-template  -f ./deployments/mediacenter/helm/sabnzb/values.yml
-``` 
-#### 
+```
+####
 
 #### jellyfin
 helm install jellyfin bjw-s/app-template -f deployments/mediacenter/helm/1_mediacenter/jellyfin/values.yaml
