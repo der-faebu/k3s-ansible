@@ -4,7 +4,7 @@
 # This chart inherits from our common library chart. You can check the default values/options here:
 # https://github.com/k8s-at-home/library-charts/tree/main/charts/stable/common/values.yaml
 #
-# helm install syncthing k8s-home-lab/syncthing -f /mediacenter/helm/syncthing/values.yml
+# helm install syncthing k8s-home-lab/syncthing -f mediacenter/helm/3_others/syncthing/values.yml
 
 image:
   # -- image repository
