@@ -214,16 +214,29 @@ kubectl apply -f deployments/clusters-setup/rancher/ingress-rancher.yaml
 
 ## Deploy applications
 The following repos are in use (not counting infrastrucutre charts installed above like traefik):
-  k8s-home-lab            https://k8s-home-lab.github.io/helm-charts/
-  bjw-s                   https://bjw-s.github.io/helm-charts
-  k8s-at-home             https://k8s-at-home.com/charts/
-  jellyfin                https://jellyfin.github.io/jellyfin-helm
-  k8s-at-home-charts      https://library-charts.k8s-at-home.com
-  gabe565                 https://charts.gabe565.com
+  - bjw-s                   https://bjw-s-labs.github.io/helm-charts
+  - k8s-home-lab            https://k8s-home-lab.github.io/helm-charts/
+  - k8s-at-home             https://k8s-at-home.com/charts/
+  - jellyfin                https://jellyfin.github.io/jellyfin-helm
+  - k8s-at-home-charts      https://library-charts.k8s-at-home.com
+  - gabe565                 https://charts.gabe565.com
 
-All applications shloud be setup in a similar and consistant way. Whenever possible a maintained chart vom k8s-home-lab should be used and preferred. It is however possible to use the app template provided by https://bjw-ss.github.io 
+To add these repos run this:
+``` bash
+helm repo add bjw-s https://bjw-s-labs.github.io/helm-charts
+helm repo add k8s-home-lab https://k8s-home-lab.github.io/helm-charts/
+helm repo add k8s-at-home https://k8s-at-home.com/charts/
+helm repo add jellyfin https://jellyfin.github.io/jellyfin-helm
+helm repo add k8s-at-home-charts https://library-charts.k8s-at-home.com
+helm repo add gabe565 https://charts.gabe565.com
+helm repo update
+```
+
+All applications shloud be setup in a similar and consistant way. Whenever possible a maintained chart from k8s-home-lab should be used and preferred. It is however possible to use the app template provided by https://bjw-ss.github.io 
 
 tl;dr `helm install <release-name> bjw-s/app-template -f values.yaml`
+
+All deployed charts are kept in the `helm-deployments.md` file.
 
 ### Gluetun
 In order to setup gluetun a nordvpn private key must be extracted. In order to achieve this, the following prerequisites must be fulfilled:

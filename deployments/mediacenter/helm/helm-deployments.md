@@ -50,6 +50,7 @@ helm install prowlarr bjw-s/app-template  -f ./deployments/mediacenter/helm/baza
 ````
 
 #### Ombi
+
 Backups are not necessary as all data is in the pg db.
 
 ```
@@ -57,24 +58,40 @@ helm install ombi bjw-s/app-template  -f ./deployments/mediacenter/helm/ombi/val
 ````
 
 #### Autiobookshelf
+
 Deployment hasn't been migrated to new bjw-s charts
+
 ```
- helm install audiobookshelf k8s-home-lab/audiobookshelf -f ./deployments/mediacenter/helm/1_mediacenter/audiobookshelf/values.yaml
+helm install audiobookshelf k8s-home-lab/audiobookshelf -f ./deployments/mediacenter/helm/1_mediacenter/audiobookshelf/values.yaml
 ```
 
 #### sabnzb
-````
+
+```
 helm install sabnzb bjw-s/app-template  -f ./deployments/mediacenter/helm/sabnzb/values.yml
 ```
 ####
 
 #### jellyfin
+
+```
 helm install jellyfin bjw-s/app-template -f deployments/mediacenter/helm/1_mediacenter/jellyfin/values.yaml
+```
+
 ####
 
 
 ### others
+
+#### Syncthing
+
+```
+helm install syncthing k8s-home-lab/syncthing -f /mediacenter/helm/3_others/syncthing/values.yaml
+```
+
+
 #### Mealie
+
 Requires a secret for the pg access
 
 ```
