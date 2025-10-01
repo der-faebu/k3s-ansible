@@ -86,11 +86,11 @@ persistence:
     accessMode: ReadWriteMany
     size: 5Ti
     retain: true
-  config:
 
+  config:
     enabled: true
     type: pvc
-    mountPath: /var/syncthing/config
+    mountPath: /var/syncthing
     readOnly: false
     nameOverride: config
     storageClass:  longhorn # "-"
